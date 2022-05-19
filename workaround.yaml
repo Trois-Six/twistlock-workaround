@@ -3,6 +3,22 @@ kind: Namespace
 metadata:
   name: twistlock
 ---
+kind: SecurityContextConstraints
+apiVersion: v1
+metadata:
+  name: twistlock-workaround-sa
+allowPrivilegedContainer: true
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: RunAsAny
+supplementalGroups:
+  type: RunAsAny
+users:
+- system:serviceaccount:twistlock-workaround:twistlock-workaround-sa
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -29,6 +45,7 @@ spec:
         app: twistlock-selinux-policy
     spec:
       restartPolicy: Never
+      serviceAccountName: twistlock-workaround-sa
       initContainers:
       - name: init-nsenter
         image: alpine:3.15
@@ -51,8 +68,6 @@ spec:
         - nsenter -t 1 -u -i -n -p -m -- /sbin/semodule -i /tmp/twistlock-workaround.pp
         stdin: true
         tty: true
-        securityContext:
-          privileged: true
         volumeMounts:
         - mountPath: /tmp
           name: tmp
