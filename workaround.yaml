@@ -39,7 +39,7 @@ spec:
         volumeMounts:
         - mountPath: /tmp
           name: tmp
-        - mountPath: /support/
+        - mountPath: /support
           name: twistlock-workaround-selinux-policy
       containers:
       - name: nsenter
