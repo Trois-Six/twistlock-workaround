@@ -48,7 +48,7 @@ spec:
         - /bin/sh
         args:
         - -c
-        - nsenter -t 1 -u -i -n -p -m /sbin/semodule -i /tmp/twistlock-workaround.pp
+        - nsenter -t 1 -u -i -n -p -m -- /sbin/semodule -i /tmp/twistlock-workaround.pp
         stdin: true
         tty: true
         securityContext:
