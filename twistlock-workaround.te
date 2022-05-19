@@ -1,0 +1,11 @@
+
+module twistlock-workaround 1.0;
+
+require {
+	type spc_t;
+	type container_runtime_t;
+	class process transition;
+}
+
+#============= spc_t ==============
+allow spc_t container_runtime_t:process transition;

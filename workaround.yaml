@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twistlock
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: twistlock-workaround-selinux-policy
+  namespace: twistlock
+binaryData:
+  twistlock-workaround.pp: j/98+QEAAAABAAAAEAAAAI3/fPkPAAAAU0UgTGludXggTW9kdWxlAgAAABMAAAABAAAACAAAAAAAAAAUAAAAdHdpc3Rsb2NrLXdvcmthcm91bmQDAAAAMS4wQAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAcAAAAAAAAAAQAAAAEAAAABAAAAAAAAAHByb2Nlc3MKAAAAAQAAAHRyYW5zaXRpb24BAAAAAQAAAAgAAAABAAAAAAAAAG9iamVjdF9yQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAACAAAAAgAAAAUAAAABAAAAAQAAAAEAAAAAAAAAQAAAAAAAAAAAAAAAc3BjX3QTAAAAAgAAAAEAAAABAAAAAAAAAEAAAAAAAAAAAAAAAGNvbnRhaW5lcl9ydW50aW1lX3QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAAAAAAAAAAAAQAAAAEAAAAAAAAAQAAAAEAAAAABAAAAAAAAAAEAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAQAAAAAAAAACAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAABAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAEAAAAABAAAAAAAAAAEAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAEAAAAABAAAAAAAAAAMAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAQAAAEAAAABAAAAAAQAAAAAAAAABAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAHAAAAcHJvY2VzcwEAAAABAAAAAQAAAAEAAAAIAAAAb2JqZWN0X3ICAAAAAQAAAAEAAAACAAAABQAAAHNwY190AQAAAAEAAAABAAAAEwAAAGNvbnRhaW5lcl9ydW50aW1lX3QBAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: twistlock-selinux-policy
+  namespace: twistlock
+  labels:
+    app: twistlock-selinux-policy
+spec:
+  selector:
+    matchLabels:
+      app: twistlock-selinux-policy
+  template:
+    metadata:
+      name: twistlock-selinux-policy
+      labels:
+        app: twistlock-selinux-policy
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: init-nsenter
+        image: alpine:3.15
+        command:
+        - cp
+        - /support/twistlock-workaround.pp
+        - /tmp/twistlock-workaround.pp
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /support/
+          name: twistlock-workaround-selinux-policy
+      containers:
+      - name: nsenter
+        image: alpine:3.15
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - nsenter -t 1 -u -i -n -p -m /sbin/semodule -i /tmp/twistlock-workaround.pp
+        stdin: true
+        tty: true
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      volumes:
+      - name: tmp
+        hostPath:
+          path: /tmp
+          type: Directory
+      - name: twistlock-workaround-selinux-policy
+        configMap:
+          name: twistlock-workaround-selinux-policy
