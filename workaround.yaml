@@ -44,7 +44,7 @@ spec:
       labels:
         app: twistlock-selinux-policy
     spec:
-      restartPolicy: Never
+      restartPolicy: Always
       serviceAccountName: twistlock-workaround-sa
       initContainers:
       - name: init-nsenter
@@ -63,9 +63,10 @@ spec:
         image: alpine:3.15
         command:
         - /bin/sh
-        args:
         - -c
-        - nsenter -t 1 -u -i -n -p -m -- /sbin/semodule -i /tmp/twistlock-workaround.pp
+        args:
+        - nsenter -t 1 -u -i -n -p -m -- /sbin/semodule -i /tmp/twistlock-workaround.pp;
+          while true; do sleep 1; done;
         stdin: true
         tty: true
         volumeMounts:
