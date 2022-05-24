@@ -2,6 +2,7 @@ apiVersion: v1
 kind: SecurityContextConstraints
 metadata:
   name: twistlock-workaround-sa
+  namespace: twistlock
 allowPrivilegedContainer: true
 runAsUser:
   type: RunAsAny
